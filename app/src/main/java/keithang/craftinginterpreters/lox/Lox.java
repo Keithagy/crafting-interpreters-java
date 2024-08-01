@@ -1,4 +1,4 @@
-package keithang.craftinginterpreters;
+package keithang.craftinginterpreters.lox;
 
 import java.io.BufferedReader;
 import java.io.IOException;

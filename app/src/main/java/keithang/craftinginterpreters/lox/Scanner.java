@@ -1,4 +1,4 @@
-package keithang.craftinginterpreters;
+package keithang.craftinginterpreters.lox;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +11,13 @@ import java.util.Map;
  * `current` points at the character currently being considered.
  * The `line` field tracks what source line `current` is on so we can produce
  * token that know their location.
+ *
+ * Note further that this class defines the *lexical* grammar of the language,
+ * which deals with how source code characters should be grouped into *lexemes*
+ * which map onto tokens.
+ * This is distinct from the *syntactic* grammar of the language, which deals
+ * with how tokens make up *token sequences* which map onto expressions (and/or
+ * statements?).
  */
 class Scanner {
   private static final Map<String, TokenType> keywords;

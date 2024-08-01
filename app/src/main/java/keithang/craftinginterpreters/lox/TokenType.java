@@ -1,4 +1,4 @@
-package keithang.craftinginterpreters;
+package keithang.craftinginterpreters.lox;
 
 enum TokenType {
   // Single-character tokens.

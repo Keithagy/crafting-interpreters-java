@@ -34,7 +34,17 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "keithang.craftinginterpreters.Lox"
+    mainClass = "keithang.craftinginterpreters.lox.Lox"
+}
+
+tasks.register<JavaExec>("generateAst") {
+    description = "Generates the AST classes"
+    group = "Custom"
+
+    mainClass.set("keithang.craftinginterpreters.tool.GenerateAst")
+    classpath = sourceSets["main"].runtimeClasspath
+
+    args("src/main/java/keithang/craftinginterpreters/lox")
 }
 
 tasks.named<JavaExec>("run") {

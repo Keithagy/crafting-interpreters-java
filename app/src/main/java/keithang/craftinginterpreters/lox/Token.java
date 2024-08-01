@@ -1,4 +1,4 @@
-package keithang.craftinginterpreters;
+package keithang.craftinginterpreters.lox;
 
 class Token {
   final TokenType type;
