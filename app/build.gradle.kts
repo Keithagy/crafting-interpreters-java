@@ -37,6 +37,12 @@ application {
     mainClass = "keithang.craftinginterpreters.Lox"
 }
 
+tasks.named<JavaExec>("run") {
+    // You need this in order to run on the Gradle daemon whilst allowing user input:
+    // https://stackoverflow.com/questions/13172137/console-application-with-java-and-gradle
+    standardInput = System.`in`
+}
+
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
