@@ -47,6 +47,16 @@ tasks.register<JavaExec>("generateAst") {
     args("src/main/java/keithang/craftinginterpreters/lox")
 }
 
+tasks.register<JavaExec>("testAst") {
+    description = "Test-prints a miniature, predefined syntax tree"
+    group = "Custom"
+
+    mainClass.set("keithang.craftinginterpreters.lox.AstPrinter")
+    classpath = sourceSets["main"].runtimeClasspath
+}
+
+// You need this in order to run on the Gradle daemon whilst allowing user input:
+// https://stackoverflow.com/questions/13172137/console-application-with-java-and-gradle
 tasks.named<JavaExec>("run") {
     // You need this in order to run on the Gradle daemon whilst allowing user input:
     // https://stackoverflow.com/questions/13172137/console-application-with-java-and-gradle

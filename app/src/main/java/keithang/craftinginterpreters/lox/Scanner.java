@@ -17,7 +17,8 @@ import java.util.Map;
  * which map onto tokens.
  * This is distinct from the *syntactic* grammar of the language, which deals
  * with how tokens make up *token sequences* which map onto expressions (and/or
- * statements?).
+ * statements?). Note further that expressions are represented in memory as
+ * (abstract) syntax trees.
  */
 class Scanner {
   private static final Map<String, TokenType> keywords;
