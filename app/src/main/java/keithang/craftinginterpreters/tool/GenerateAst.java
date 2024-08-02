@@ -18,6 +18,19 @@ import java.util.List;
  * 
  * NOTE: This grammar remains ambiguous. For instance, what does it mean to
  * define the binary expression `"doggo" "+" "555"`?
+ *
+ * A more complex version of the grammar which outlines operator precedence +
+ * associativity, and in doing so disambiguates the grammar.
+ *
+ * expression → equality ;
+ * equality → comparison ( ( "!=" | "==" ) comparison )* ;
+ * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+ * term → factor ( ( "-" | "+" ) factor )* ;
+ * factor → unary ( ( "/" | "*" ) unary )* ;
+ * unary → ( "!" | "-" ) unary
+ * | primary ;
+ * primary → NUMBER | STRING | "true" | "false" | "nil"
+ * | "(" expression ")" ;
  */
 public class GenerateAst {
   public static void main(String[] args) throws IOException {
