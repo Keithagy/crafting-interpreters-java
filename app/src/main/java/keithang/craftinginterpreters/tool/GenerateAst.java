@@ -16,6 +16,13 @@ import java.util.List;
  * binary => expression operator expression ;
  * operator => "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" ;
  * 
+ * Expanding to account for statemnts:
+ * program -> statement* EOF ;
+ * statement -> exprStmt | printStmt ;
+ * exprStmt -> expression ";" ;
+ * printStmt -> "print" expression ";" ;
+ * // Everything below as per before...
+ *
  * NOTE: This grammar remains ambiguous. For instance, what does it mean to
  * define the binary expression `"doggo" "+" "555"`?
  */
@@ -31,6 +38,9 @@ public class GenerateAst {
         "Grouping : Expr expression",
         "Literal : Object value",
         "Unary : Token operator, Expr right"));
+    defineAst(outputDir, "Stmt", Arrays.asList(
+        "Expression: Expr expression",
+        "Print: Expr expression"));
   }
 
   /*
@@ -46,8 +56,6 @@ public class GenerateAst {
 
     // Write boilerplate
     writer.println("package keithang.craftinginterpreters.lox;");
-    writer.println();
-    writer.println("import java.util.List;");
     writer.println();
 
     writer.println("abstract class " + baseName + " {");
