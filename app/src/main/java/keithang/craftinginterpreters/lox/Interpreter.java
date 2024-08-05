@@ -1,9 +1,13 @@
 package keithang.craftinginterpreters.lox;
 
+import java.util.List;
+
 import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
 import keithang.craftinginterpreters.lox.Expr.Unary;
+import keithang.craftinginterpreters.lox.Stmt.Expression;
+import keithang.craftinginterpreters.lox.Stmt.Print;
 
 /**
  * Lox type Java representation
@@ -13,14 +17,19 @@ import keithang.craftinginterpreters.lox.Expr.Unary;
  * number Double
  * string String
  */
-class Interpreter implements Expr.Visitor<Object> {
-  void interpret(Expr expression) {
+class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+  void interpret(List<Stmt> statements) {
     try {
-      Object value = evaluate(expression);
-      System.out.println(stringify(value));
+      for (Stmt statement : statements) {
+        execute(statement);
+      }
     } catch (RuntimeError error) {
       Lox.runtimeError(error);
     }
+  }
+
+  private void execute(Stmt statement) {
+    statement.accept(this);
   }
 
   private String stringify(Object object) {
@@ -157,6 +166,21 @@ class Interpreter implements Expr.Visitor<Object> {
     if (object instanceof Boolean)
       return (boolean) object;
     return true;
+  }
+
+  // Unlike expressions, statements produce no values, so the return type of the
+  // visit methods is Void, not Object.
+  @Override
+  public Void visitExpressionStmt(Expression stmt) {
+    evaluate(stmt.expression);
+    return null;
+  }
+
+  @Override
+  public Void visitPrintStmt(Print stmt) {
+    Object value = evaluate(stmt.expression);
+    System.out.println(stringify(value));
+    return null;
   }
 
 }

@@ -1,5 +1,6 @@
 package keithang.craftinginterpreters.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,12 +38,34 @@ class Parser {
     this.tokens = tokens;
   }
 
-  Expr parse() {
-    try {
-      return expression();
-    } catch (ParseError e) {
-      return null;
+  List<Stmt> parse() {
+    List<Stmt> statements = new ArrayList<>();
+    while (!isAtEnd()) {
+      try {
+        statements.add(statement());
+      } catch (ParseError e) {
+        continue;
+      }
     }
+    return statements;
+  }
+
+  private Stmt statement() {
+    if (match(TokenType.PRINT))
+      return printStatement();
+    return expressionStatement();
+  }
+
+  private Stmt printStatement() {
+    Expr value = expression();
+    consume(TokenType.SEMICOLON, "Expect ';' after value.");
+    return new Stmt.Print(value);
+  }
+
+  private Stmt expressionStatement() {
+    Expr expr = expression();
+    consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+    return new Stmt.Print(expr);
   }
 
   private Expr expression() {
