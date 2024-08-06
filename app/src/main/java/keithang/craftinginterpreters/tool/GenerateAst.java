@@ -34,6 +34,8 @@ import java.util.List;
  * | NUMBER | STRING
  * | "(" expression ")"
  * | IDENTIFIER ;
+ * expression => assignment ;
+ * assignment => IDENTIFIER "=" assignemnt | equality;
  *
  * NOTE: This grammar remains ambiguous. For instance, what does it mean to
  * define the binary expression `"doggo" "+" "555"`?
@@ -46,6 +48,7 @@ public class GenerateAst {
     }
     String outputDir = args[0];
     defineAst(outputDir, "Expr", Arrays.asList(
+        "Assign : Token name, Expr value",
         "Binary : Expr left, Token operator, Expr right",
         "Grouping : Expr expression",
         "Literal : Object value",
