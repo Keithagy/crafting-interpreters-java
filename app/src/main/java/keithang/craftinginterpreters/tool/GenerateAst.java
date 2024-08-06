@@ -23,6 +23,18 @@ import java.util.List;
  * printStmt -> "print" expression ";" ;
  * // Everything below as per before...
  *
+ * Expanding further to account for variable declaration:
+ * Right now, declarations only distinguish between variables and base
+ * statements, but will later include functions and classes.
+ * program => declaration* EOF ;
+ * declaration => varDecl | statement ;
+ * varDecl => "var" IDENTIFIER ("=" expression)? ";" ;
+ * statement => exprStmt | printStmt ;
+ * primary → "true" | "false" | "nil"
+ * | NUMBER | STRING
+ * | "(" expression ")"
+ * | IDENTIFIER ;
+ *
  * NOTE: This grammar remains ambiguous. For instance, what does it mean to
  * define the binary expression `"doggo" "+" "555"`?
  */
@@ -37,10 +49,12 @@ public class GenerateAst {
         "Binary : Expr left, Token operator, Expr right",
         "Grouping : Expr expression",
         "Literal : Object value",
-        "Unary : Token operator, Expr right"));
+        "Unary : Token operator, Expr right",
+        "Variable : Token name"));
     defineAst(outputDir, "Stmt", Arrays.asList(
         "Expression: Expr expression",
-        "Print: Expr expression"));
+        "Print: Expr expression",
+        "Var: Token name, Expr initializer"));
   }
 
   /*

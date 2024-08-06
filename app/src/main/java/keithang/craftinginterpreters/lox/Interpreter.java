@@ -6,8 +6,10 @@ import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
 import keithang.craftinginterpreters.lox.Expr.Unary;
+import keithang.craftinginterpreters.lox.Expr.Variable;
 import keithang.craftinginterpreters.lox.Stmt.Expression;
 import keithang.craftinginterpreters.lox.Stmt.Print;
+import keithang.craftinginterpreters.lox.Stmt.Var;
 
 /**
  * Lox type Java representation
@@ -18,6 +20,8 @@ import keithang.craftinginterpreters.lox.Stmt.Print;
  * string String
  */
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+  private Environment environment = new Environment();
+
   void interpret(List<Stmt> statements) {
     try {
       for (Stmt statement : statements) {
@@ -181,6 +185,21 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     Object value = evaluate(stmt.expression);
     System.out.println(stringify(value));
     return null;
+  }
+
+  @Override
+  public Void visitVarStmt(Var stmt) {
+    Object value = null;
+    if (stmt.initializer != null) {
+      value = evaluate(stmt.initializer);
+    }
+    environment.define(stmt.name.lexeme, value);
+    return null;
+  }
+
+  @Override
+  public Object visitVariableExpr(Variable expr) {
+    return environment.get(expr.name);
   }
 
 }

@@ -42,12 +42,34 @@ class Parser {
     List<Stmt> statements = new ArrayList<>();
     while (!isAtEnd()) {
       try {
-        statements.add(statement());
+        statements.add(declaration());
       } catch (ParseError e) {
         continue;
       }
     }
     return statements;
+  }
+
+  private Stmt declaration() {
+    try {
+      if (match(TokenType.VAR)) {
+        return varDeclaration();
+      }
+      return statement();
+    } catch (ParseError e) {
+      synchronize();
+      return null;
+    }
+  }
+
+  private Stmt varDeclaration() {
+    Token name = consume(TokenType.IDENTIFIER, "Expect variable name.");
+    Expr initializer = null;
+    if (match(TokenType.EQUAL)) {
+      initializer = expression();
+    }
+    consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");
+    return new Stmt.Var(name, initializer);
   }
 
   private Stmt statement() {
@@ -137,6 +159,9 @@ class Parser {
     if (match(TokenType.NUMBER, TokenType.STRING)) {
       return new Expr.Literal(previous().literal);
     }
+    if (match(TokenType.IDENTIFIER)) {
+      return new Expr.Variable(previous());
+    }
     throw error(peek(), "Expect expression.");
   }
 
@@ -162,9 +187,6 @@ class Parser {
     return new ParseError();
   }
 
-  // Alas, we don't get to see this method in action until we implement
-  // statements. Since right now we can only parse a single expression anyway,
-  // it's no big loss.
   private void synchronize() {
     advance();
     while (!isAtEnd()) {

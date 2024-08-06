@@ -4,6 +4,7 @@ import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
 import keithang.craftinginterpreters.lox.Expr.Unary;
+import keithang.craftinginterpreters.lox.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
   String print(Expr expr) {
@@ -56,5 +57,10 @@ class AstPrinter implements Expr.Visitor<String> {
         new Token(TokenType.STAR, "*", null, 1),
         new Grouping(new Literal(45.67)));
     System.out.println(new AstPrinter().print(expression));
+  }
+
+  @Override
+  public String visitVariableExpr(Variable expr) {
+    return expr.name.lexeme;
   }
 }
