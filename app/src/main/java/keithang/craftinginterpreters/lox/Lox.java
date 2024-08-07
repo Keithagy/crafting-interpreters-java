@@ -61,7 +61,19 @@ public class Lox {
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
     Parser parser = new Parser(tokens);
+    if (hadError) {
+      return;
+    }
+    if (tokens.get(tokens.size() - 2).type != TokenType.SEMICOLON) {
+      Expr expression = parser.parseExpression();
+
+      if (hadError) {
+        return;
+      }
+      interpreter.interpretExpression(expression);
+    }
     List<Stmt> statements = parser.parse();
+
     if (hadError) {
       return;
     }

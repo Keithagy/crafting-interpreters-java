@@ -2,11 +2,13 @@ package keithang.craftinginterpreters.lox;
 
 import java.util.List;
 
+import keithang.craftinginterpreters.lox.Expr.Assign;
 import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
 import keithang.craftinginterpreters.lox.Expr.Unary;
 import keithang.craftinginterpreters.lox.Expr.Variable;
+import keithang.craftinginterpreters.lox.Stmt.Block;
 import keithang.craftinginterpreters.lox.Stmt.Expression;
 import keithang.craftinginterpreters.lox.Stmt.Print;
 import keithang.craftinginterpreters.lox.Stmt.Var;
@@ -27,6 +29,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       for (Stmt statement : statements) {
         execute(statement);
       }
+    } catch (RuntimeError error) {
+      Lox.runtimeError(error);
+    }
+  }
+
+  void interpretExpression(Expr expression) {
+    try {
+      System.out.println(stringify(evaluate(expression)));
     } catch (RuntimeError error) {
       Lox.runtimeError(error);
     }
@@ -200,6 +210,32 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Object visitVariableExpr(Variable expr) {
     return environment.get(expr.name);
+  }
+
+  @Override
+  public Object visitAssignExpr(Assign expr) {
+    Object value = evaluate(expr.value);
+    environment.assign(expr.name, value);
+    return value;
+  }
+
+  @Override
+  public Void visitBlockStmt(Block stmt) {
+    executeBlock(stmt.statements, new Environment(environment));
+    return null;
+  }
+
+  private void executeBlock(List<Stmt> statements, Environment env) {
+    Environment previous = this.environment;
+    try {
+      this.environment = env;
+      for (Stmt statement : statements) {
+        execute(statement);
+      }
+    } finally {
+      this.environment = previous;
+    }
+
   }
 
 }

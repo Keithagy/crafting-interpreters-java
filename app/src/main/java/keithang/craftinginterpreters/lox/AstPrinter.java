@@ -1,5 +1,6 @@
 package keithang.craftinginterpreters.lox;
 
+import keithang.craftinginterpreters.lox.Expr.Assign;
 import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
@@ -26,7 +27,12 @@ class AstPrinter implements Expr.Visitor<String> {
     if (expr.value == null) {
       return "nil";
     }
-    return expr.value.toString();
+
+    String text = expr.value.toString();
+    if (text.endsWith(".0")) {
+      text = text.substring(0, text.length() - 2);
+    }
+    return text;
   }
 
   @Override
@@ -61,6 +67,11 @@ class AstPrinter implements Expr.Visitor<String> {
 
   @Override
   public String visitVariableExpr(Variable expr) {
-    return expr.name.lexeme;
+    return "Variable" + expr.name.lexeme;
+  }
+
+  @Override
+  public String visitAssignExpr(Assign expr) {
+    return "Assign value " + print(expr.value) + " to var " + expr.name.lexeme;
   }
 }
