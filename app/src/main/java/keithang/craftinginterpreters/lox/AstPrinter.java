@@ -4,6 +4,7 @@ import keithang.craftinginterpreters.lox.Expr.Assign;
 import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
+import keithang.craftinginterpreters.lox.Expr.Logical;
 import keithang.craftinginterpreters.lox.Expr.Unary;
 import keithang.craftinginterpreters.lox.Expr.Variable;
 
@@ -73,5 +74,10 @@ class AstPrinter implements Expr.Visitor<String> {
   @Override
   public String visitAssignExpr(Assign expr) {
     return "Assign value " + print(expr.value) + " to var " + expr.name.lexeme;
+  }
+
+  @Override
+  public String visitLogicalExpr(Logical expr) {
+    return print(expr.left) + " " + (expr.operator.type == TokenType.OR ? "OR" : "AND") + " " + print(expr.right);
   }
 }

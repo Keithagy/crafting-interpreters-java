@@ -6,10 +6,12 @@ import keithang.craftinginterpreters.lox.Expr.Assign;
 import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
+import keithang.craftinginterpreters.lox.Expr.Logical;
 import keithang.craftinginterpreters.lox.Expr.Unary;
 import keithang.craftinginterpreters.lox.Expr.Variable;
 import keithang.craftinginterpreters.lox.Stmt.Block;
 import keithang.craftinginterpreters.lox.Stmt.Expression;
+import keithang.craftinginterpreters.lox.Stmt.If;
 import keithang.craftinginterpreters.lox.Stmt.Print;
 import keithang.craftinginterpreters.lox.Stmt.Var;
 
@@ -236,6 +238,31 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       this.environment = previous;
     }
 
+  }
+
+  @Override
+  public Void visitIfStmt(If stmt) {
+    if (isTruthy(evaluate(stmt.condition))) {
+      execute(stmt.thenBranch);
+    } else if (stmt.elseBranch != null) {
+      execute(stmt.elseBranch);
+    }
+    return null;
+  }
+
+  @Override
+  public Object visitLogicalExpr(Logical expr) {
+    Object left = evaluate(expr.left);
+    if (expr.operator.type == TokenType.OR) {
+      if (isTruthy(left)) {
+        return left;
+      } else {
+        if (!isTruthy(left)) {
+          return left;
+        }
+      }
+    }
+    return evaluate(expr.right);
   }
 
 }
