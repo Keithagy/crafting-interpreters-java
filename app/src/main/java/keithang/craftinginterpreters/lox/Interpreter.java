@@ -14,6 +14,7 @@ import keithang.craftinginterpreters.lox.Stmt.Expression;
 import keithang.craftinginterpreters.lox.Stmt.If;
 import keithang.craftinginterpreters.lox.Stmt.Print;
 import keithang.craftinginterpreters.lox.Stmt.Var;
+import keithang.craftinginterpreters.lox.Stmt.While;
 
 /**
  * Lox type Java representation
@@ -31,14 +32,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       for (Stmt statement : statements) {
         execute(statement);
       }
-    } catch (RuntimeError error) {
-      Lox.runtimeError(error);
-    }
-  }
-
-  void interpretExpression(Expr expression) {
-    try {
-      System.out.println(stringify(evaluate(expression)));
     } catch (RuntimeError error) {
       Lox.runtimeError(error);
     }
@@ -256,13 +249,21 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     if (expr.operator.type == TokenType.OR) {
       if (isTruthy(left)) {
         return left;
-      } else {
-        if (!isTruthy(left)) {
-          return left;
-        }
+      }
+    } else {
+      if (!isTruthy(left)) {
+        return left;
       }
     }
     return evaluate(expr.right);
+  }
+
+  @Override
+  public Void visitWhileStmt(While stmt) {
+    while (isTruthy(evaluate(stmt.condition))) {
+      execute(stmt.body);
+    }
+    return null;
   }
 
 }

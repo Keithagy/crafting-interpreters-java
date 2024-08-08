@@ -64,14 +64,14 @@ public class Lox {
     if (hadError) {
       return;
     }
-    if (tokens.get(tokens.size() - 2).type != TokenType.SEMICOLON) {
-      Expr expression = parser.parseExpression();
-
-      if (hadError) {
-        return;
-      }
-      interpreter.interpretExpression(expression);
-    }
+    // if (tokens.get(tokens.size() - 2).type != TokenType.SEMICOLON) {
+    // Expr expression = parser.parseExpression();
+    //
+    // if (hadError) {
+    // return;
+    // }
+    // interpreter.interpretExpression(expression);
+    // }
     List<Stmt> statements = parser.parse();
 
     if (hadError) {
