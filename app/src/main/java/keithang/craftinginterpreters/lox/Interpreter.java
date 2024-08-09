@@ -1,20 +1,7 @@
 package keithang.craftinginterpreters.lox;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import keithang.craftinginterpreters.lox.Expr.Assign;
-import keithang.craftinginterpreters.lox.Expr.Binary;
-import keithang.craftinginterpreters.lox.Expr.Grouping;
-import keithang.craftinginterpreters.lox.Expr.Literal;
-import keithang.craftinginterpreters.lox.Expr.Logical;
-import keithang.craftinginterpreters.lox.Expr.Unary;
-import keithang.craftinginterpreters.lox.Expr.Variable;
-import keithang.craftinginterpreters.lox.Stmt.Block;
-import keithang.craftinginterpreters.lox.Stmt.Expression;
-import keithang.craftinginterpreters.lox.Stmt.If;
-import keithang.craftinginterpreters.lox.Stmt.Print;
-import keithang.craftinginterpreters.lox.Stmt.Var;
-import keithang.craftinginterpreters.lox.Stmt.While;
 
 /**
  * Lox type Java representation
@@ -25,7 +12,36 @@ import keithang.craftinginterpreters.lox.Stmt.While;
  * string String
  */
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
-  private Environment environment = new Environment();
+
+  // `environment` tracks the interpreter changes as we enter and exit local
+  // scopes. It tracks the *current* environment. `globals` holds a fixed
+  // reference to the outermost global environment.
+  final Environment globals = new Environment();
+  private Environment environment = globals;
+
+  Interpreter() {
+    // interesting... a "trait object"...
+    // interpreter startup gets clock defined. I imagine other ways exist to do
+    // this, such as through static block, but it's ok
+    globals.define("clock", new LoxCallable() {
+
+      @Override
+      public int arity() {
+        return 0;
+      }
+
+      @Override
+      public Object call(Interpreter interpreter, List<Object> arguments) {
+        return (double) System.currentTimeMillis() / 1000.0;
+      }
+
+      @Override
+      public String toString() {
+        return "<native fn>";
+      }
+
+    });
+  }
 
   void interpret(List<Stmt> statements) {
     try {
@@ -55,7 +71,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Object visitBinaryExpr(Binary expr) {
+  public Object visitBinaryExpr(Expr.Binary expr) {
     Object left = evaluate(expr.left);
     Object right = evaluate(expr.right);
 
@@ -110,7 +126,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Object visitGroupingExpr(Grouping expr) {
+  public Object visitGroupingExpr(Expr.Grouping expr) {
     return evaluate(expr.expression);
   }
 
@@ -126,12 +142,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
    * interpreter concept, part of the runtime's world.
    */
   @Override
-  public Object visitLiteralExpr(Literal expr) {
+  public Object visitLiteralExpr(Expr.Literal expr) {
     return expr.value;
   }
 
   @Override
-  public Object visitUnaryExpr(Unary expr) {
+  public Object visitUnaryExpr(Expr.Unary expr) {
     Object right = evaluate(expr.right);
     switch (expr.operator.type) {
       case BANG:
@@ -180,20 +196,20 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   // Unlike expressions, statements produce no values, so the return type of the
   // visit methods is Void, not Object.
   @Override
-  public Void visitExpressionStmt(Expression stmt) {
+  public Void visitExpressionStmt(Stmt.Expression stmt) {
     evaluate(stmt.expression);
     return null;
   }
 
   @Override
-  public Void visitPrintStmt(Print stmt) {
+  public Void visitPrintStmt(Stmt.Print stmt) {
     Object value = evaluate(stmt.expression);
     System.out.println(stringify(value));
     return null;
   }
 
   @Override
-  public Void visitVarStmt(Var stmt) {
+  public Void visitVarStmt(Stmt.Var stmt) {
     Object value = null;
     if (stmt.initializer != null) {
       value = evaluate(stmt.initializer);
@@ -203,24 +219,24 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Object visitVariableExpr(Variable expr) {
+  public Object visitVariableExpr(Expr.Variable expr) {
     return environment.get(expr.name);
   }
 
   @Override
-  public Object visitAssignExpr(Assign expr) {
+  public Object visitAssignExpr(Expr.Assign expr) {
     Object value = evaluate(expr.value);
     environment.assign(expr.name, value);
     return value;
   }
 
   @Override
-  public Void visitBlockStmt(Block stmt) {
+  public Void visitBlockStmt(Stmt.Block stmt) {
     executeBlock(stmt.statements, new Environment(environment));
     return null;
   }
 
-  private void executeBlock(List<Stmt> statements, Environment env) {
+  void executeBlock(List<Stmt> statements, Environment env) {
     Environment previous = this.environment;
     try {
       this.environment = env;
@@ -234,7 +250,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Void visitIfStmt(If stmt) {
+  public Void visitIfStmt(Stmt.If stmt) {
     if (isTruthy(evaluate(stmt.condition))) {
       execute(stmt.thenBranch);
     } else if (stmt.elseBranch != null) {
@@ -244,7 +260,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Object visitLogicalExpr(Logical expr) {
+  public Object visitLogicalExpr(Expr.Logical expr) {
     Object left = evaluate(expr.left);
     if (expr.operator.type == TokenType.OR) {
       if (isTruthy(left)) {
@@ -259,11 +275,44 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Void visitWhileStmt(While stmt) {
+  public Void visitWhileStmt(Stmt.While stmt) {
     while (isTruthy(evaluate(stmt.condition))) {
       execute(stmt.body);
     }
     return null;
+  }
+
+  @Override
+  public Object visitCallExpr(Expr.Call expr) {
+    Object callee = evaluate(expr.callee);
+    List<Object> arguments = new ArrayList<>();
+    for (Expr argument : expr.arguments) {
+      arguments.add(evaluate(argument));
+    }
+    if (!(callee instanceof LoxCallable)) {
+      throw new RuntimeError(expr.paren, "Can only call functions and classes.");
+    }
+    LoxCallable function = (LoxCallable) callee;
+    if (arguments.size() != function.arity()) {
+      throw new RuntimeError(expr.paren,
+          "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
+    }
+    return function.call(this, arguments);
+  }
+
+  @Override
+  public Void visitFunctionStmt(Stmt.Function stmt) {
+    LoxFunction function = new LoxFunction(stmt, environment);
+    environment.define(stmt.name.lexeme, function);
+    return null;
+  }
+
+  @Override
+  public Void visitReturnStmt(Stmt.Return stmt) {
+    Object value = null;
+    if (stmt.value != null)
+      value = evaluate(stmt.value);
+    throw new Return(value);
   }
 
 }

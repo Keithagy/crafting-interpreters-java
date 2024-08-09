@@ -1,0 +1,7 @@
+fun goodbye() {
+  print clock();
+  print ":)";
+  goodbye();
+}
+
+goodbye();

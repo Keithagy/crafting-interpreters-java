@@ -68,11 +68,39 @@ class Parser {
       if (match(TokenType.VAR)) {
         return varDeclaration();
       }
+      if (match(TokenType.FUN)) {
+        return function("function");
+      }
       return statement();
     } catch (ParseError e) {
       synchronize();
       return null;
     }
+  }
+
+  // Will handle both function delclarations and methods
+  private Stmt.Function function(String kind) {
+    Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+    consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
+    List<Token> parameters = new ArrayList<>();
+    if (!check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (parameters.size() >= 255) {
+          error(peek(), "Can't have more than 255 parameters.");
+        }
+        parameters.add(
+            consume(TokenType.IDENTIFIER, "Expect parameter name."));
+      } while (match(TokenType.COMMA));
+    }
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+
+    // Note that we consume `{` at the beginning of the body here before calling
+    // `block()`. That's because `block()` assumes the brace token has already been
+    // matched. Consuming it here lets us report a more precise error message if the
+    // `{` isn't found since we know it's in the context of a function declaration.
+    consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+    List<Stmt> body = block();
+    return new Stmt.Function(name, parameters, body);
   }
 
   private Stmt varDeclaration() {
@@ -94,12 +122,24 @@ class Parser {
     }
     if (match(TokenType.PRINT))
       return printStatement();
+    if (match(TokenType.RETURN))
+      return returnStatement();
     if (match(TokenType.WHILE)) {
       return whileStatement();
     }
     if (match(TokenType.LEFT_BRACE))
       return new Stmt.Block(block());
     return expressionStatement();
+  }
+
+  private Stmt returnStatement() {
+    Token keyword = previous();
+    Expr value = null;
+    if (!check(TokenType.SEMICOLON)) {
+      value = expression();
+    }
+    consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+    return new Stmt.Return(keyword, value);
   }
 
   // instead of adding a new syntax tree node type here, we desugar a for
@@ -278,7 +318,42 @@ class Parser {
     if (match(TokenType.BANG, TokenType.MINUS)) {
       return new Expr.Unary(previous(), unary());
     }
-    return primary();
+    return call();
+  }
+
+  private Expr call() {
+    Expr expr = primary();
+    while (true) {
+      if (match(TokenType.LEFT_PAREN)) {
+        expr = finishCall(expr);
+      } else {
+        break;
+      }
+    }
+    return expr;
+  }
+
+  // We check for the zero argument case first by seeing if the next token is `)`.
+  // If it is, we don't try to parse any arguments.
+  //
+  // Otherwise, we parse an expression, then look for a comma indicating that
+  // there is another argument after that. We keep doing that as long as we find
+  // commas after each expression. When we don't find a comma, then the argument
+  // list must be done and we consume the expected closing parenthesis. Finally,
+  // we wrap the callee and those arguments up into a call AST node.
+  private Expr finishCall(Expr callee) {
+    List<Expr> arguments = new ArrayList<>();
+    if (!check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (arguments.size() >= 255) {
+          error(peek(), "Can't have more than 255 arguments.");
+        }
+        arguments.add(expression()); // TODO: extend the grammar here to add function expression parsing, matching
+                                     // for TokenType.FUN
+      } while (match(TokenType.COMMA));
+    }
+    Token paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
+    return new Expr.Call(callee, paren, arguments);
   }
 
   private Expr primary() {

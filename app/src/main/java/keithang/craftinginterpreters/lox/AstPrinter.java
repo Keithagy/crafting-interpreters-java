@@ -1,7 +1,11 @@
 package keithang.craftinginterpreters.lox;
 
+import java.util.Arrays;
+import java.util.List;
+
 import keithang.craftinginterpreters.lox.Expr.Assign;
 import keithang.craftinginterpreters.lox.Expr.Binary;
+import keithang.craftinginterpreters.lox.Expr.Call;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
 import keithang.craftinginterpreters.lox.Expr.Logical;
@@ -79,5 +83,12 @@ class AstPrinter implements Expr.Visitor<String> {
   @Override
   public String visitLogicalExpr(Logical expr) {
     return print(expr.left) + " " + (expr.operator.type == TokenType.OR ? "OR" : "AND") + " " + print(expr.right);
+  }
+
+  @Override
+  public String visitCallExpr(Call expr) {
+    List<Expr> exprs = Arrays.asList(expr.callee);
+    exprs.addAll(expr.arguments);
+    return parenthesize("Call", exprs.toArray(new Expr[exprs.size()]));
   }
 }
