@@ -6,6 +6,7 @@ import java.util.List;
 import keithang.craftinginterpreters.lox.Expr.Assign;
 import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Call;
+import keithang.craftinginterpreters.lox.Expr.Function;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
 import keithang.craftinginterpreters.lox.Expr.Logical;
@@ -90,5 +91,10 @@ class AstPrinter implements Expr.Visitor<String> {
     List<Expr> exprs = Arrays.asList(expr.callee);
     exprs.addAll(expr.arguments);
     return parenthesize("Call", exprs.toArray(new Expr[exprs.size()]));
+  }
+
+  @Override
+  public String visitFunctionExpr(Function expr) {
+    return parenthesize("Fn Expr", expr);
   }
 }

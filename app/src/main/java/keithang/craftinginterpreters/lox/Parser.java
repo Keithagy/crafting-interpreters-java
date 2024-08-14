@@ -69,7 +69,7 @@ class Parser {
         return varDeclaration();
       }
       if (match(TokenType.FUN)) {
-        return function("function");
+        return functionStatement("function");
       }
       return statement();
     } catch (ParseError e) {
@@ -79,8 +79,11 @@ class Parser {
   }
 
   // Will handle both function delclarations and methods
-  private Stmt.Function function(String kind) {
-    Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+  private Stmt.Function functionStatement(String kind) {
+    Token name = new Token(TokenType.IDENTIFIER, "lambda", null, previous().line);
+    if (kind != "lambda") {
+      name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+    }
     consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
     List<Token> parameters = new ArrayList<>();
     if (!check(TokenType.RIGHT_PAREN)) {
@@ -240,7 +243,7 @@ class Parser {
   }
 
   private Expr assignment() {
-    Expr expr = or();
+    Expr expr = functionExpression();
     if (match(TokenType.EQUAL)) {
       Token equals = previous();
       Expr value = assignment();
@@ -251,6 +254,13 @@ class Parser {
       error(equals, "Invalid assignment target.");
     }
     return expr;
+  }
+
+  private Expr functionExpression() {
+    if ((match(TokenType.FUN))) {
+      return new Expr.Function(functionStatement("lambda"));
+    }
+    return or();
   }
 
   private Expr or() {
@@ -348,8 +358,7 @@ class Parser {
         if (arguments.size() >= 255) {
           error(peek(), "Can't have more than 255 arguments.");
         }
-        arguments.add(expression()); // TODO: extend the grammar here to add function expression parsing, matching
-                                     // for TokenType.FUN
+        arguments.add(expression());
       } while (match(TokenType.COMMA));
     }
     Token paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");

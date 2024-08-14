@@ -3,6 +3,8 @@ package keithang.craftinginterpreters.lox;
 import java.util.ArrayList;
 import java.util.List;
 
+import keithang.craftinginterpreters.lox.Expr.Function;
+
 /**
  * Lox type Java representation
  * Any Lox value Object
@@ -313,6 +315,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     if (stmt.value != null)
       value = evaluate(stmt.value);
     throw new Return(value);
+  }
+
+  @Override
+  public Object visitFunctionExpr(Function expr) {
+    return new LoxFunction(expr.fn, environment);
   }
 
 }

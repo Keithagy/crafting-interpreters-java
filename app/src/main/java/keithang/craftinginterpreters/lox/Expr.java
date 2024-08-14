@@ -6,6 +6,8 @@ abstract class Expr {
   interface Visitor<R> {
     R visitAssignExpr(Assign expr);
 
+    R visitFunctionExpr(Function expr);
+
     R visitBinaryExpr(Binary expr);
 
     R visitCallExpr(Call expr);
@@ -34,6 +36,19 @@ abstract class Expr {
 
     final Token name;
     final Expr value;
+  }
+
+  static class Function extends Expr {
+    Function(Stmt.Function fn) {
+      this.fn = fn;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitFunctionExpr(this);
+    }
+
+    final Stmt.Function fn;
   }
 
   static class Binary extends Expr {

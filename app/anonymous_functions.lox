@@ -10,3 +10,32 @@ thrice(fun (a) {
 // "1".
 // "2".
 // "3".
+print "";
+
+var a = fun(a, b) {
+    return a + b;
+};
+var b = fun(i) {
+    print a(i,i);
+};
+
+thrice(b);
+// "2".
+// "4".
+// "6".
+print "";
+
+var c = fun(a) {
+  print a;
+  print "but i'm ignoring you!";
+    return fun(i) {
+        return b(i);
+      };
+};
+
+thrice(c(5));
+// "5".
+// "but i'm ignoring you!".
+// "2".
+// "4".
+// "6".
