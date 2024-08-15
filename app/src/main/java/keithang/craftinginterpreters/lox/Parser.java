@@ -68,6 +68,9 @@ class Parser {
       if (match(TokenType.VAR)) {
         return varDeclaration();
       }
+      if (match(TokenType.CLASS)) {
+        return classDeclaration();
+      }
       if (match(TokenType.FUN)) {
         return functionStatement("function");
       }
@@ -76,6 +79,17 @@ class Parser {
       synchronize();
       return null;
     }
+  }
+
+  private Stmt classDeclaration() {
+    Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
+    consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
+    List<Stmt.Function> methods = new ArrayList<>();
+    while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+      methods.add(functionStatement("method"));
+    }
+    consume(TokenType.RIGHT_BRACE, "Expect '}' after class body");
+    return new Stmt.Class(name, methods);
   }
 
   // Will handle both function delclarations and methods
