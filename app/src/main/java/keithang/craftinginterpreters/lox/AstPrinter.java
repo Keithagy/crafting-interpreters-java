@@ -7,9 +7,11 @@ import keithang.craftinginterpreters.lox.Expr.Assign;
 import keithang.craftinginterpreters.lox.Expr.Binary;
 import keithang.craftinginterpreters.lox.Expr.Call;
 import keithang.craftinginterpreters.lox.Expr.Function;
+import keithang.craftinginterpreters.lox.Expr.Get;
 import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
 import keithang.craftinginterpreters.lox.Expr.Logical;
+import keithang.craftinginterpreters.lox.Expr.Set;
 import keithang.craftinginterpreters.lox.Expr.Unary;
 import keithang.craftinginterpreters.lox.Expr.Variable;
 
@@ -96,5 +98,15 @@ class AstPrinter implements Expr.Visitor<String> {
   @Override
   public String visitFunctionExpr(Function expr) {
     return parenthesize("Fn Expr", expr);
+  }
+
+  @Override
+  public String visitGetExpr(Get expr) {
+    return parenthesize("Get", expr);
+  }
+
+  @Override
+  public String visitSetExpr(Set expr) {
+    return parenthesize("Set", expr);
   }
 }
