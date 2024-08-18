@@ -350,7 +350,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       LoxFunction function = new LoxFunction(method, environment, method.name.lexeme.equals("init"));
       methods.put(method.name.lexeme, function);
     }
-    LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
+    Map<String, LoxFunction> staticMethods = new HashMap<>();
+    for (Stmt.Function staticMethod : stmt.staticMethods) {
+      LoxFunction function = new LoxFunction(staticMethod, new Environment(), false);
+      staticMethods.put(staticMethod.name.lexeme, function);
+    }
+    LoxClass klass = new LoxClass(stmt.name.lexeme, methods, staticMethods);
     // This two-stage variable binding process allows references to the class inside
     // its own methods
     environment.assign(stmt.name, klass);
@@ -362,6 +367,9 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     Object object = evaluate(expr.object);
     if (object instanceof LoxInstance) {
       return ((LoxInstance) object).get(expr.name);
+    }
+    if (object instanceof LoxClass) {
+      return ((LoxClass) object).findStaticMethod(expr.name.lexeme);
     }
     throw new RuntimeError(expr.name, "Only instances have properties.");
   }

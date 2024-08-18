@@ -85,11 +85,16 @@ class Parser {
     Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
     consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
     List<Stmt.Function> methods = new ArrayList<>();
+    List<Stmt.Function> staticMethods = new ArrayList<>();
     while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
-      methods.add(functionStatement("method"));
+      if (match(TokenType.CLASS)) {
+        staticMethods.add(functionStatement("static_method"));
+      } else {
+        methods.add(functionStatement("method"));
+      }
     }
     consume(TokenType.RIGHT_BRACE, "Expect '}' after class body");
-    return new Stmt.Class(name, methods);
+    return new Stmt.Class(name, methods, staticMethods);
   }
 
   // Will handle both function delclarations and methods

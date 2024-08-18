@@ -28,6 +28,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     NONE,
     FUNCTION,
     METHOD,
+    STATIC_METHOD,
     INITIALIZER
   }
 
@@ -244,6 +245,10 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     declare(stmt.name);
     define(stmt.name);
 
+    for (Stmt.Function staticMethod : stmt.staticMethods) {
+      resolveFunction(staticMethod, FunctionType.STATIC_METHOD);
+    }
+
     // Before we step in and start resolving the method bodies, we push a new scope
     // and define "this" in it as it it were a variable, then, when we're done, we
     // discard that surrounding scope.
@@ -278,6 +283,10 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   public Void visitThisExpr(Expr.This expr) {
     if (currentClass == ClassType.NONE) {
       Lox.error(expr.keyword, "Can't use 'this' outside of a class.");
+      return null;
+    }
+    if (currentFunction == FunctionType.STATIC_METHOD) {
+      Lox.error(expr.keyword, "Can't use 'this' within static methods.");
       return null;
     }
     resolveLocal(expr, expr.keyword);

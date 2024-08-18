@@ -1,0 +1,11 @@
+var hello = "hello";
+class Math {
+  class square(n) {
+    // this.pie = 3.14; >> should fail resolution without panicking
+    // print this.pie; >> should fail resolution without panicking
+    print hello; // This should work
+    return n * n;
+  }
+}
+
+print Math.square(3); // Prints "9".
