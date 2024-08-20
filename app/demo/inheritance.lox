@@ -1,0 +1,45 @@
+class Doughnut {
+  class yum() {
+      print "All are yum.";
+    }
+  cook() {
+    print "Fry until golden brown.";
+  }
+}
+
+class BostonCream < Doughnut {}
+
+BostonCream.yum();
+BostonCream().cook();
+
+
+// static method handling here currently has a gap
+class A {
+  class hello() {
+      print "hello!";
+    }
+  method() {
+    print "A method";
+  }
+}
+
+class B < A {
+  method() {
+    print "B method";
+  }
+
+  test() {
+    super.method();
+  }
+  class staticTest() {
+      super.hello();
+    }
+}
+
+class C < B {}
+
+A.hello();
+B.staticTest(); // interpreter panicks at runtime, because superclass reference gets nothing in the static context
+// C.staticTest();
+// C.hello();
+C().test();

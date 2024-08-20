@@ -344,7 +344,25 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitClassStmt(Stmt.Class stmt) {
+    Object superclass = null;
+    if (stmt.superclass != null) {
+      superclass = evaluate(stmt.superclass);
+      if (!(superclass instanceof LoxClass)) {
+        throw new RuntimeError(stmt.superclass.name, "Superclass must be a class");
+      }
+    }
     environment.define(stmt.name.lexeme, null);
+
+    // When we execute a subclass definition, we create a new environment. Inside
+    // that environment, we store a reference to the superclass -- the actual
+    // LoxClass object for the superclass which we have now that we are in the
+    // runtime. Then we create the LoxFunctions for each method. Those will capture
+    // the current environment -- the one where we just bound "super" -- as their
+    // closure, holding on to the superclass like we need.
+    if (stmt.superclass != null) {
+      environment = new Environment(environment);
+      environment.define("super", superclass);
+    }
     Map<String, LoxFunction> methods = new HashMap<>();
     for (Stmt.Function method : stmt.methods) {
       LoxFunction function = new LoxFunction(method, environment, method.name.lexeme.equals("init"));
@@ -355,7 +373,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
       LoxFunction function = new LoxFunction(staticMethod, new Environment(), false);
       staticMethods.put(staticMethod.name.lexeme, function);
     }
-    LoxClass klass = new LoxClass(stmt.name.lexeme, methods, staticMethods);
+    LoxClass klass = new LoxClass(stmt.name.lexeme, (LoxClass) superclass, methods, staticMethods);
+
+    // Once that's done, we pop the environment.
+    if (superclass != null) {
+      environment = environment.enclosing;
+    }
     // This two-stage variable binding process allows references to the class inside
     // its own methods
     environment.assign(stmt.name, klass);
@@ -388,5 +411,30 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Object visitThisExpr(Expr.This expr) {
     return lookUpVariable(expr.keyword, expr);
+  }
+
+  @Override
+  public Object visitSuperExpr(Expr.Super expr) {
+    // TODO: Learning gaps
+    // Need to revise how the resolver passes locals to interpreter
+    // Need to recap how method binding works
+    // Need to recap how environment nestedness lets you access the right object by
+    // offsetting distance of super by 1
+    // How would we handle super calls with ( inherited ) static methods?
+    // Maybe we just say that static methods are not inherited?
+    int distance = locals.get(expr);
+    LoxClass superclass = (LoxClass) environment.getAt(distance, "super");
+
+    // Unfortunately, inside the super expression, we don't have a convenient note
+    // for the resolver to hang the number of hops to `this` on. Fortunately, we do
+    // control the layout of the environment chains. The environment where `this` is
+    // bound is always right inside the environment where we store `super`.
+    // Offfsetting the distance by one looks up `this` in that inner environment.
+    LoxInstance object = (LoxInstance) environment.getAt(distance - 1, "this");
+    LoxFunction method = superclass.findMethod(expr.method.lexeme);
+    if (method == null) {
+      throw new RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
+    }
+    return method.bind(object);
   }
 }

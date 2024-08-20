@@ -34,7 +34,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   private enum ClassType {
     NONE,
-    CLASS
+    CLASS,
+    SUBCLASS
   }
 
   @Override
@@ -245,6 +246,16 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     declare(stmt.name);
     define(stmt.name);
 
+    if (stmt.superclass != null) {
+      if (stmt.name.lexeme.equals(stmt.superclass.name.lexeme)) {
+        Lox.error(stmt.superclass.name, "A class cant inherit from itself");
+      }
+      currentClass = ClassType.SUBCLASS;
+      resolve(stmt.superclass);
+      beginScope();
+      scopes.peek().put("super", true);
+    }
+
     for (Stmt.Function staticMethod : stmt.staticMethods) {
       resolveFunction(staticMethod, FunctionType.STATIC_METHOD);
     }
@@ -262,6 +273,9 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
       resolveFunction(method, declaration);
     }
     endScope();
+    if (stmt.superclass != null) {
+      endScope();
+    }
     currentClass = enclosingClass;
     return null;
   }
@@ -288,6 +302,17 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     if (currentFunction == FunctionType.STATIC_METHOD) {
       Lox.error(expr.keyword, "Can't use 'this' within static methods.");
       return null;
+    }
+    resolveLocal(expr, expr.keyword);
+    return null;
+  }
+
+  @Override
+  public Void visitSuperExpr(Expr.Super expr) {
+    if (currentClass == ClassType.NONE) {
+      Lox.error(expr.keyword, "Can't use 'super' outside of a class.");
+    } else if (currentClass != ClassType.SUBCLASS) {
+      Lox.error(expr.keyword, "Can't use 'super' in a class with no superclass.");
     }
     resolveLocal(expr, expr.keyword);
     return null;

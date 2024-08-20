@@ -12,6 +12,7 @@ import keithang.craftinginterpreters.lox.Expr.Grouping;
 import keithang.craftinginterpreters.lox.Expr.Literal;
 import keithang.craftinginterpreters.lox.Expr.Logical;
 import keithang.craftinginterpreters.lox.Expr.Set;
+import keithang.craftinginterpreters.lox.Expr.Super;
 import keithang.craftinginterpreters.lox.Expr.This;
 import keithang.craftinginterpreters.lox.Expr.Unary;
 import keithang.craftinginterpreters.lox.Expr.Variable;
@@ -114,5 +115,10 @@ class AstPrinter implements Expr.Visitor<String> {
   @Override
   public String visitThisExpr(This expr) {
     return parenthesize("This", expr);
+  }
+
+  @Override
+  public String visitSuperExpr(Super expr) {
+    return parenthesize("Super", expr);
   }
 }
